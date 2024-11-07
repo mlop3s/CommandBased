@@ -90,9 +90,10 @@ steps:
   displayName: 'Install GitHub CLI'
 
 - script: |
+    git init    
     git config --global user.name 'github-actions[bot]'
     git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-    git remote set-url origin https://$(GITHUB_PAT)@github.com/mlop3s/devopsbackup.git
+    git remote set-url origin https://mlop3s:$(GITHUB_PAT)@github.com/mlop3s/devopsbackup.git
     git add .
     git commit -m "Automated commit"
     git push origin master
