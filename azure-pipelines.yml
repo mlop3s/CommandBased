@@ -1,34 +1,71 @@
-# ASP.NET Core (.NET Framework)
-# Build and test ASP.NET Core projects targeting the full .NET Framework.
-# Add steps that publish symbols, save build artifacts, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
-
 trigger:
-- master
+- master  # Adjust this to your default branch
 
 pool:
-  vmImage: 'windows-latest'
+  name: 'Default'
 
 variables:
-  solution: '**/*.sln'
-  buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
+  azureSubscription: 'OllisAzure'
+  appName: 'webapplom'
+  resourceGroupName: 'lomazrg'
+  zipFileName: 'docs_$(Build.BuildId).zip'
+  zipFilePath: '$(Build.ArtifactStagingDirectory)/$(zipFileName)'
+  storageAccountName: 'lomexceltrigger '
+  containerName: 'documentation'
+  blobName: '$(zipFileName)'  
 
 steps:
-- task: NuGetToolInstaller@1
+- script: |
+    dotnet restore CommandBased/CommandLineWebApp.sln
+  displayName: 'Restore NuGet Packages'
 
-- task: NuGetCommand@2
-  inputs:
-    restoreSolution: '$(solution)'
+- script: |
+    dotnet build CommandBased/CommandLineWebApp.sln --configuration $(buildConfiguration)
+  displayName: 'Build Solution'
 
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+- script: |
+    dotnet test CommandBased/CommandLineWebApp.sln --configuration $(buildConfiguration) --no-build --verbosity normal
+  displayName: 'Run Tests'
 
-- task: VSTest@2
+- task: DotNetCoreCLI@2
   inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    command: 'publish'
+    projects: '**/*.csproj'
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/publish'
+
+- script: |
+    dotnet tool install -g docfx
+    echo '##vso[task.prependpath]$(Agent.ToolsDirectory)/dotnet/tools'
+  displayName: 'Install DocFX'
+
+- script: |
+    docfx --version
+  displayName: 'Verify DocFX Installation'
+
+- script: |
+    docfx CommandBased/docfx.json
+  displayName: 'Generate Documentation'
+  env:
+    PATH: $(PATH):$(HOME)/.dotnet/tools
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: 'CommandBased/_site'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: $(zipFilePath)
+    replaceExistingArchive: true
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/publish/CommandBased.zip'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: $(azureSubscription)
+    appName: $(appName)
+    package: '$(Build.ArtifactStagingDirectory)/publish/CommandBased.zip'
+    resourceGroupName: $(resourceGroupName)
+    appType: 'webAppLinux'
