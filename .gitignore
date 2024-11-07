@@ -1,0 +1,8 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/CommandBased/CopilotIndices/0.2.1657.32929
+/.vs/ProjectEvaluation
+/.vs/CommandBased
+/CommandLineWebApp/CommandLineWebApp.csproj.user
