@@ -24,17 +24,21 @@ steps:
     installationPath: $(Agent.ToolsDirectory)/dotnet
     performMultiLevelLookup: true
 
-- script: |
-    dotnet restore CommandBased/CommandLineWebApp.sln
-  displayName: 'Restore NuGet Packages'
+- task: DotNetCoreCLI@2
+  displayName: 'Restore Nuget Packages'
+  inputs:
+    command: 'restore'
+    feedsToUse: 'select'
+    vstsFeed: 'nameofyourfeed'
+    includeNuGetOrg: true
+    projects: '**/*.csproj'
 
-- script: |
-    dotnet build CommandBased/CommandLineWebApp.sln --configuration $(buildConfiguration)
-  displayName: 'Build Solution'
-
-- script: |
-    dotnet test CommandBased/CommandLineWebApp.sln --configuration $(buildConfiguration) --no-build --verbosity normal
-  displayName: 'Run Tests'
+- task: DotNetCoreCLI@2
+  displayName: 'Build solution'
+  inputs:
+    command: 'build'
+    projects: '**/*.csproj'
+    arguments: '--configuration $(buildConfiguration)'
 
 - task: DotNetCoreCLI@2
   inputs:
@@ -52,13 +56,13 @@ steps:
   displayName: 'Verify DocFX Installation'
 
 - script: |
-    docfx CommandBased/docfx.json
+    docfx CommandLineWebApp/docfx.json
   displayName: 'Generate Documentation'
   env:
     PATH: $(PATH):$(HOME)/.dotnet/tools
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: 'CommandBased/_site'
+    rootFolderOrFile: 'CommandLineWebApp/_site'
     includeRootFolder: false
     archiveType: 'zip'
     archiveFile: $(zipFilePath)
@@ -66,7 +70,7 @@ steps:
 
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/publish/CommandBased.zip'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/publish/CommandLineWebApp.zip'
     ArtifactName: 'drop'
     publishLocation: 'Container'
 
@@ -74,6 +78,6 @@ steps:
   inputs:
     azureSubscription: $(azureSubscription)
     appName: $(appName)
-    package: '$(Build.ArtifactStagingDirectory)/publish/CommandBased.zip'
+    package: '$(Build.ArtifactStagingDirectory)/publish/CommandLineWebApp.zip'
     resourceGroupName: $(resourceGroupName)
     appType: 'webAppLinux'
