@@ -2,6 +2,7 @@ trigger:
 - master  # Adjust this to your default branch
 
 pool:
+  name: 'Azure Pipelines'
   vmImage: 'ubuntu-latest'
 
 variables:
