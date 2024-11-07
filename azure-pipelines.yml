@@ -12,7 +12,7 @@ variables:
   resourceGroupName: 'lomazrg'
   zipFileName: 'docs_$(Build.BuildId).zip'
   zipFilePath: '$(Build.ArtifactStagingDirectory)/$(zipFileName)'
-  storageAccountName: 'lomexceltrigger '
+  storageAccountName: 'azlomsa '
   containerName: 'documentation'
   blobName: '$(zipFileName)'  
 
@@ -20,7 +20,7 @@ steps:
 - task: UseDotNet@2
   inputs:
     packageType: 'sdk'
-    version: '8.0.10'
+    version: '8.0'
     installationPath: $(Agent.ToolsDirectory)/dotnet
 
 - script: |
