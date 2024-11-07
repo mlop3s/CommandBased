@@ -95,7 +95,7 @@ steps:
     git remote set-url origin https://$(GITHUB_PAT)@github.com/mlop3s/devopsbackup.git
     git add .
     git commit -m "Automated commit"
-    git push origin main
+    git push origin master
   displayName: 'Commit and Push Changes'
   env:
     GITHUB_PAT: $(GITHUB_PAT)
