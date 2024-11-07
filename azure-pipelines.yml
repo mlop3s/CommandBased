@@ -97,8 +97,8 @@ steps:
 
 - task: CopyFiles@2
   inputs:
-    SourceFolder: '$(zipFilePath)'
-    Contents: 'file-to-copy.txt' # You can use wildcards like '**/*.txt' to copy multiple files
+    SourceFolder: $(Build.ArtifactStagingDirectory)
+    Contents: $(zipFileName) # You can use wildcards like '**/*.txt' to copy multiple files
     TargetFolder: 'devopsbackup'
   displayName: 'Copy file to target folder'
 
