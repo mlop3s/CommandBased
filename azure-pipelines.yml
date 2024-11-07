@@ -88,3 +88,14 @@ steps:
     sudo apt update
     sudo apt install gh
   displayName: 'Install GitHub CLI'
+
+- script: |
+    git config --global user.name 'github-actions[bot]'
+    git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+    git remote set-url origin https://$(GITHUB_PAT)@github.com/your-username/your-repo.git
+    git add .
+    git commit -m "Automated commit"
+    git push origin main
+  displayName: 'Commit and Push Changes'
+  env:
+    GITHUB_PAT: $(GITHUB_PAT)
