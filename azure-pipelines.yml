@@ -57,6 +57,7 @@ steps:
   displayName: 'Ensure Resource Group Exists'
 
 - task: AzureCLI@2
+  displayName:  'Create appservice plan if missing'
   condition: eq(variables['webAppDeleted'], 'true')
   inputs:
     azureSubscription: $(azureSubscription)
@@ -69,6 +70,11 @@ steps:
       -appSku $(appSku)
     inlineScript: |
       # Check if the service plan exists
+      echo $(resourceGroupName)
+      echo $(appServicePlan)
+      echo $(azureLocation)
+      echo $(appSku)
+      
       SERVICE_PLAN_EXISTS=$(az appservice plan show --name $(appServicePlan) --resource-group  $(resourceGroupName) --query "name" --output tsv)
 
       if [ -z "$SERVICE_PLAN_EXISTS" ]; then
