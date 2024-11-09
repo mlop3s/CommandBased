@@ -17,6 +17,32 @@ variables:
   blobName: '$(zipFileName)'  
 
 steps:
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: $(azureSubscription)
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'        
+    inlineScript: |
+      # Replace with your resource group and web app name
+      RESOURCE_GROUP=$(resourceGroupName)
+      WEB_APP_NAME=$(appName)
+
+      # Check if the web app exists
+      az webapp show --resource-group $RESOURCE_GROUP --name $WEB_APP_NAME
+      if [ $? -ne 0 ]; then
+        echo "Web app does not exist or has been deleted."
+        exit 1
+      fi
+
+      # Check the status of the web app
+      STATUS=$(az webapp show --resource-group $RESOURCE_GROUP --name $WEB_APP_NAME --query "state" -o tsv)
+      if [ "$STATUS" != "Running" ]; then
+        echo "Web app is not running. Current status: $STATUS"
+        exit 1
+      fi
+
+      echo "Web app is running."
+
 - task: UseDotNet@2
   inputs:
     packageType: 'sdk'
@@ -81,3 +107,35 @@ steps:
     package: '$(Build.ArtifactStagingDirectory)/publish/CommandLineWebApp.zip'
     resourceGroupName: $(resourceGroupName)
     appType: 'webAppLinux'
+
+- script: |
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+    sudo apt-add-repository https://cli.github.com/packages
+    sudo apt update
+    sudo apt install gh
+  displayName: 'Install GitHub CLI'
+
+- script: |
+    git clone https://mlop3s:$(GITHUB_PAT)@github.com/mlop3s/devopsbackup.git
+  displayName: 'Clone'
+  env:
+    GITHUB_PAT: $(GITHUB_PAT)
+
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: $(Build.ArtifactStagingDirectory)
+    Contents: $(zipFileName) # You can use wildcards like '**/*.txt' to copy multiple files
+    TargetFolder: 'devopsbackup'
+  displayName: 'Copy file to target folder'
+
+- script: |
+    echo "Running script in the src folder"
+    git config --global user.name 'github-actions[bot]'
+    git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+    git add .
+    git status
+    git commit -m "Automated Commit"
+    git push
+  displayName: 'Run script in src folder'
+  workingDirectory: 'devopsbackup'
+  
