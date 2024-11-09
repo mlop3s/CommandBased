@@ -27,15 +27,11 @@ steps:
     scriptType: 'bash'
     scriptLocation: 'inlineScript'        
     inlineScript: |
-      # Replace with your resource group and web app name
-      RESOURCE_GROUP=$(resourceGroupName)
-      WEB_APP_NAME=$(appName)
-
       # Check the status of the web app
-      STATUS=$(az webapp show --resource-group $RESOURCE_GROUP --name $WEB_APP_NAME --query "state" -o tsv)
+      STATUS=$(az webapp show --resource-group $(resourceGroupName) --name $(appName) --query "state" -o tsv)
       if [ "$STATUS" != "Running" ]; then
         echo "Web app is malfunctioning. Deleting the web app..."
-        az webapp delete --resource-group $RESOURCE_GROUP --name $WEB_APP_NAME
+        az webapp delete --resource-group $(resourceGroupName) --name $(appName) 
         echo "##vso[task.setvariable variable=webAppDeleted]true"
       else
         echo "Web app is running. No need to delete."
