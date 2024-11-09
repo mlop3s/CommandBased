@@ -93,7 +93,7 @@ steps:
     resourceGroupName: $(resourceGroupName)
     location: $(azureLocation)
     templateLocation: 'Linked artifact'
-    csmFile: '$(System.DefaultWorkingDirectory)/CommandLineWebApp/template.json'
+    csmFile: '$(System.DefaultWorkingDirectory)/CommandLineWebApp/Devops/template.json'
     csmParametersFile: '$(System.DefaultWorkingDirectory)/CommandLineWebApp/Devops/parameters.json'
 
 - task: UseDotNet@2
@@ -181,6 +181,24 @@ steps:
     sudo apt update
     sudo apt install gh
   displayName: 'Install GitHub CLI'
+
+- script: |
+    # Variables
+    GITHUB_OWNER=mlop3s
+    REPOSITORY_NAME=devopsbackup
+
+    # Check if the repository exists
+    REPO_EXISTS=$(gh repo view $GITHUB_OWNER/$REPOSITORY_NAME --json name --jq .name)
+
+    if [ -z "$REPO_EXISTS" ]; then
+      echo "Repository does not exist."
+      exit 1
+    else
+      echo "Repository exists: $REPO_EXISTS"
+    fi
+  displayName: 'Check if GitHub repository exists'
+  env:
+    GITHUB_TOKEN: $(GITHUB_PAT) 
 
 - script: |
     git clone https://mlop3s:$(GITHUB_PAT)@github.com/mlop3s/devopsbackup.git
