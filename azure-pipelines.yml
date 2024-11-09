@@ -22,6 +22,7 @@ variables:
 
 steps:
 - task: AzureCLI@2
+  displayName: 'Check if App has been compromised and delete if needed'
   inputs:
     azureSubscription: $(azureSubscription)
     scriptType: 'bash'
@@ -46,6 +47,9 @@ steps:
     azureSubscription: $(azureSubscription)
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
+    arguments: >
+      -resourceGroupName $(resourceGroupName)
+      -resourceGroupLocation $(resourceGroupLocation)
     inlineScript: |
       if ! az group exists --name $(resourceGroupName); then
         az group create --name $(resourceGroupName) --location $(resourceGroupLocation)
@@ -58,6 +62,11 @@ steps:
     azureSubscription: $(azureSubscription)
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
+    arguments: >
+      -resourceGroupName $(resourceGroupName)
+      -appServicePlan $(appServicePlan)
+      -azureLocation $(azureLocation)
+      -appSku $(appSku)
     inlineScript: |
       # Check if the service plan exists
       SERVICE_PLAN_EXISTS=$(az appservice plan show --name $(appServicePlan) --resource-group  $(resourceGroupName) --query "name" --output tsv)
