@@ -187,18 +187,16 @@ steps:
     GITHUB_OWNER=mlop3s
     REPOSITORY_NAME=devopsbackup
 
-    # Check if the repository exists
-    REPO_EXISTS=$(gh repo view $GITHUB_OWNER/$REPOSITORY_NAME --json name --jq .name)
-
-    if [ -z "$REPO_EXISTS" ]; then
-      echo "Repository does not exist."
-      exit 1
+    gh auth login --with-token <<< "$GITHUB_PAT"
+    if gh repo view $GITHUB_OWNER/$REPOSITORY_NAME > /dev/null 2>&1; then
+      echo "Repository $REPO_NAME already exists."
     else
-      echo "Repository exists: $REPO_EXISTS"
+      echo "Creating repository $REPO_NAME."
+      gh repo create $GITHUB_OWNER/$REPOSITORY_NAME --public --description "AZ400 backup repo" --confirm
     fi
   displayName: 'Check if GitHub repository exists'
   env:
-    GITHUB_TOKEN: $(GITHUB_PAT) 
+    GITHUB_PAT: $(GITHUB_PAT) 
 
 - script: |
     git clone https://mlop3s:$(GITHUB_PAT)@github.com/mlop3s/devopsbackup.git
