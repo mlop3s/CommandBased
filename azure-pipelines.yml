@@ -19,6 +19,8 @@ variables:
   containerName: 'documentation'
   blobName: '$(zipFileName)'
   websiteUrl: 'https://webapplom.azurewebsites.net'
+  githubOwner: mlop3s
+  repositoryName: devopsbackup
 
 steps:
 - task: AzureCLI@2
@@ -183,10 +185,6 @@ steps:
   displayName: 'Install GitHub CLI'
 
 - script: |
-    # Variables
-    GITHUB_OWNER=mlop3s
-    REPOSITORY_NAME=devopsbackup
-
     gh auth login --with-token <<< "$GITHUB_PAT"
     if gh repo view $GITHUB_OWNER/$REPOSITORY_NAME > /dev/null 2>&1; then
       echo "Repository $REPO_NAME already exists."
@@ -197,18 +195,22 @@ steps:
   displayName: 'Check if GitHub repository exists'
   env:
     GITHUB_PAT: $(GITHUB_PAT) 
+    GITHUB_OWNER: $(githubOwner)
+    REPOSITORY_NAME: $(repositoryName)
 
 - script: |
-    git clone https://mlop3s:$(GITHUB_PAT)@github.com/mlop3s/devopsbackup.git
+    git clone https://mlop3s:$(GITHUB_PAT)@github.com/$GITHUB_OWNER/$REPOSITORY_NAME.git
   displayName: 'Clone git'
   env:
     GITHUB_PAT: $(GITHUB_PAT)
+    GITHUB_OWNER: $(githubOwner)
+    REPOSITORY_NAME: $(repositoryName)    
 
 - task: CopyFiles@2
   inputs:
     SourceFolder: $(Build.ArtifactStagingDirectory)
     Contents: $(zipFileName) # You can use wildcards like '**/*.txt' to copy multiple files
-    TargetFolder: 'devopsbackup'
+    TargetFolder: $(repositoryName)
   displayName: 'Copy file to target folder'
 
 - script: |
