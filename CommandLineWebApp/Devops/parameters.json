@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "subscriptionId": {
+            "value": "06c0d8bd-affe-45f2-a6e6-ee5deabe6413"
+        },
+        "resourceGroupName": {
+            "value": "az400"
+        },
+        "name": {
+            "value": "webapplom"
+        },
+        "location": {
+            "value": "Germany West Central"
+        },
+        "hostingPlanName": {
+            "value": "ASP-LomAzRG-bd9c (B1: 1)"
+        },
+        "serverFarmResourceGroup": {
+            "value": "lomazrg"
+        },
+        "alwaysOn": {
+            "value": false
+        },
+        "ftpsState": {
+            "value": "FtpsOnly"
+        },
+        "sku": {
+            "value": "Free"
+        },
+        "skuCode": {
+            "value": "F1"
+        },
+        "numberOfWorkers": {
+            "value": "1"
+        },
+        "workerSize": {
+            "value": "0"
+        },
+        "workerSizeId": {
+            "value": "0"
+        },
+        "linuxFxVersion": {
+            "value": "DOTNETCORE|8.0"
+        }
+    }
+}
