@@ -10,6 +10,7 @@ variables:
   azureSubscription: 'OllisAzure'
   azureLocation: 'Germany West Central'
   appServicePlan:'ASP-LomAzRG-bd9c (B1: 1)'
+  appSku: 'B1'
   appName: 'webapplom'
   resourceGroupName: 'lomazrg'
   zipFileName: 'docs_$(Build.BuildId).zip'
@@ -51,6 +52,23 @@ steps:
         az group create --name $(resourceGroupName) --location $(resourceGroupLocation)
       fi
   displayName: 'Ensure Resource Group Exists'
+
+- task: AzureCLI@2
+  condition: eq(variables['webAppDeleted'], 'true')
+  inputs:
+    azureSubscription: $(azureSubscription)
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      # Check if the service plan exists
+      SERVICE_PLAN_EXISTS=$(az appservice plan show --name $(appServicePlan) --resource-group  $(resourceGroupName) --query "name" --output tsv)
+
+      if [ -z "$SERVICE_PLAN_EXISTS" ]; then
+        echo "Service plan does not exist. Creating service plan..."
+        az appservice plan create --name $(appServicePlan) --resource-group $(resourceGroupName) --location $(azureLocation)) --sku $(appSku) --is-linux
+      else
+        echo "Service plan already exists."
+      fi
 
 - task: AzureResourceGroupDeployment@2
   condition: eq(variables['webAppDeleted'], 'true')
