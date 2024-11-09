@@ -43,6 +43,7 @@ steps:
 
 - task: AzureCLI@2
   condition: eq(variables['webAppDeleted'], 'true')
+  displayName: 'Ensure Resource Group Exists'
   inputs:
     azureSubscription: $(azureSubscription)
     scriptType: 'bash'
@@ -54,8 +55,7 @@ steps:
       if ! az group exists --name $(resourceGroupName); then
         az group create --name $(resourceGroupName) --location $(resourceGroupLocation)
       fi
-  displayName: 'Ensure Resource Group Exists'
-
+  
 - task: AzureCLI@2
   displayName:  'Create appservice plan if missing'
   condition: eq(variables['webAppDeleted'], 'true')
@@ -79,7 +79,7 @@ steps:
 
       if [ -z "$SERVICE_PLAN_EXISTS" ]; then
         echo "Service plan does not exist. Creating service plan..."
-        az appservice plan create --name $(appServicePlan) --resource-group $(resourceGroupName) --location $(azureLocation)) --sku $(appSku) --is-linux
+        az appservice plan create --name $(appServicePlan) --resource-group $(resourceGroupName) --location $(azureLocation) --sku $(appSku) --is-linux
       else
         echo "Service plan already exists."
       fi
@@ -97,6 +97,7 @@ steps:
     csmParametersFile: '$(System.DefaultWorkingDirectory)/CommandLineWebApp/Devops/parameters.json'
 
 - task: UseDotNet@2
+  displayName: 'Installing .net 8.0'
   inputs:
     packageType: 'sdk'
     version: 8.x
@@ -120,6 +121,7 @@ steps:
     arguments: '--configuration $(buildConfiguration)'
 
 - task: DotNetCoreCLI@2
+  displayName: 'Publishing solution'
   inputs:
     command: 'publish'
     projects: '**/*.csproj'
@@ -140,6 +142,7 @@ steps:
   env:
     PATH: $(PATH):$(HOME)/.dotnet/tools
 - task: ArchiveFiles@2
+  displayName: 'Ziping Contents'
   inputs:
     rootFolderOrFile: 'CommandLineWebApp/_site'
     includeRootFolder: false
@@ -148,12 +151,14 @@ steps:
     replaceExistingArchive: true
 
 - task: PublishBuildArtifacts@1
+  displayName: 'Publising artifacts'
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)/publish/CommandLineWebApp.zip'
     ArtifactName: 'drop'
     publishLocation: 'Container'
 
 - task: AzureWebApp@1
+  displayName: 'Upoading app to Azure'
   inputs:
     azureSubscription: $(azureSubscription)
     appName: $(appName)
@@ -168,7 +173,7 @@ steps:
       echo "Website is down"
       exit 1
     fi
-  displayName: 'Ping Website'
+  displayName: 'Ping Azure Webapp'
 
 - script: |
     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
@@ -179,7 +184,7 @@ steps:
 
 - script: |
     git clone https://mlop3s:$(GITHUB_PAT)@github.com/mlop3s/devopsbackup.git
-  displayName: 'Clone'
+  displayName: 'Clone git'
   env:
     GITHUB_PAT: $(GITHUB_PAT)
 
@@ -198,6 +203,6 @@ steps:
     git status
     git commit -m "Automated Commit"
     git push
-  displayName: 'Run script in src folder'
+  displayName: 'Commiting new zip file to github'
   workingDirectory: 'devopsbackup'
   
