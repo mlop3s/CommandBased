@@ -17,7 +17,7 @@ variables:
   storageAccountName: 'azlomsa '
   containerName: 'documentation'
   blobName: '$(zipFileName)'
-  websiteUrl: 'webapplom.azurewebsites.net'
+  websiteUrl: 'https://webapplom.azurewebsites.net'
 
 steps:
 - task: AzureCLI@2
