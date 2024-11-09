@@ -17,6 +17,32 @@ variables:
   blobName: '$(zipFileName)'  
 
 steps:
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: $(azureSubscription)
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'        
+    inlineScript: |
+      # Replace with your resource group and web app name
+      RESOURCE_GROUP=$(resourceGroupName)
+      WEB_APP_NAME=$(appName)
+
+      # Check if the web app exists
+      az webapp show --resource-group $RESOURCE_GROUP --name $WEB_APP_NAME
+      if [ $? -ne 0 ]; then
+        echo "Web app does not exist or has been deleted."
+        exit 1
+      fi
+
+      # Check the status of the web app
+      STATUS=$(az webapp show --resource-group $RESOURCE_GROUP --name $WEB_APP_NAME --query "state" -o tsv)
+      if [ "$STATUS" != "Running" ]; then
+        echo "Web app is not running. Current status: $STATUS"
+        exit 1
+      fi
+
+      echo "Web app is running."
+
 - task: UseDotNet@2
   inputs:
     packageType: 'sdk'
