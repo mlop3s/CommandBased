@@ -8,13 +8,16 @@ pool:
 variables:
   buildConfiguration: 'Release'
   azureSubscription: 'OllisAzure'
+  azureLocation: 'Germany West Central'
+  appServicePlan:'ASP-LomAzRG-bd9c (B1: 1)'
   appName: 'webapplom'
   resourceGroupName: 'lomazrg'
   zipFileName: 'docs_$(Build.BuildId).zip'
   zipFilePath: '$(Build.ArtifactStagingDirectory)/$(zipFileName)'
   storageAccountName: 'azlomsa '
   containerName: 'documentation'
-  blobName: '$(zipFileName)'  
+  blobName: '$(zipFileName)'
+  websiteUrl: 'webapplom.azurewebsites.net'
 
 steps:
 - task: AzureCLI@2
@@ -27,21 +30,38 @@ steps:
       RESOURCE_GROUP=$(resourceGroupName)
       WEB_APP_NAME=$(appName)
 
-      # Check if the web app exists
-      az webapp show --resource-group $RESOURCE_GROUP --name $WEB_APP_NAME
-      if [ $? -ne 0 ]; then
-        echo "Web app does not exist or has been deleted."
-        exit 1
-      fi
-
       # Check the status of the web app
       STATUS=$(az webapp show --resource-group $RESOURCE_GROUP --name $WEB_APP_NAME --query "state" -o tsv)
       if [ "$STATUS" != "Running" ]; then
-        echo "Web app is not running. Current status: $STATUS"
-        exit 1
+        echo "Web app is malfunctioning. Deleting the web app..."
+        az webapp delete --resource-group $RESOURCE_GROUP --name $WEB_APP_NAME
+        echo "##vso[task.setvariable variable=webAppDeleted]true"
+      else
+        echo "Web app is running. No need to delete."
       fi
 
-      echo "Web app is running."
+- task: AzureCLI@2
+  condition: eq(variables['webAppDeleted'], 'true')
+  inputs:
+    azureSubscription: $(azureSubscription)
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      if ! az group exists --name $(resourceGroupName); then
+        az group create --name $(resourceGroupName) --location $(resourceGroupLocation)
+      fi
+  displayName: 'Ensure Resource Group Exists'
+
+- task: AzureResourceGroupDeployment@2
+  condition: eq(variables['webAppDeleted'], 'true')
+  inputs:
+    azureSubscription: $(azureSubscription)
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: $(resourceGroupName)
+    location: $(azureLocation)
+    templateLocation: 'Linked artifact'
+    csmFile: '$(System.DefaultWorkingDirectory)/CommandLineWebApp/template.json'
+    csmParametersFile: '$(System.DefaultWorkingDirectory)/CommandLineWebApp/Devops/parameters.json'
 
 - task: UseDotNet@2
   inputs:
@@ -107,6 +127,15 @@ steps:
     package: '$(Build.ArtifactStagingDirectory)/publish/CommandLineWebApp.zip'
     resourceGroupName: $(resourceGroupName)
     appType: 'webAppLinux'
+
+- script: |
+    if curl -s --head  --request GET $(websiteUrl) | grep "200 OK" > /dev/null; then 
+      echo "Website is up"
+    else
+      echo "Website is down"
+      exit 1
+    fi
+  displayName: 'Ping Website'
 
 - script: |
     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
