@@ -20,7 +20,7 @@ variables:
   blobName: '$(zipFileName)'
   websiteUrl: 'https://webapplom.azurewebsites.net'
   githubOwner: mlop3s
-  repositoryName: devopsbackup
+  repositoryName: devopsbackup2
 
 steps:
 - task: AzureCLI@2
