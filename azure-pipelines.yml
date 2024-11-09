@@ -25,7 +25,10 @@ steps:
   inputs:
     azureSubscription: $(azureSubscription)
     scriptType: 'bash'
-    scriptLocation: 'inlineScript'        
+    scriptLocation: 'inlineScript'
+    arguments: >
+      -resourceGroupName $(resourceGroupName)
+      -appName $(appName)
     inlineScript: |
       # Check the status of the web app
       STATUS=$(az webapp show --resource-group $(resourceGroupName) --name $(appName) --query "state" -o tsv)
