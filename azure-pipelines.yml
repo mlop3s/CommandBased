@@ -8,8 +8,9 @@ pool:
 variables:
   buildConfiguration: 'Release'
   azureSubscription: 'OllisAzure'
-  azureLocation: 'Germany West Central'
-  appServicePlan:'ASP-LomAzRG-bd9c (B1: 1)'
+  azureLocation: "'Germany West Central'"
+  appServicePlan: 'ASP-LomAzRG-bd9c-B1'
+  appSku: 'B1'
   appName: 'webapplom'
   resourceGroupName: 'lomazrg'
   zipFileName: 'docs_$(Build.BuildId).zip'
@@ -21,20 +22,20 @@ variables:
 
 steps:
 - task: AzureCLI@2
+  displayName: 'Check if App has been compromised and delete if needed'
   inputs:
     azureSubscription: $(azureSubscription)
     scriptType: 'bash'
-    scriptLocation: 'inlineScript'        
+    scriptLocation: 'inlineScript'
+    arguments: >
+      -resourceGroupName $(resourceGroupName)
+      -appName $(appName)
     inlineScript: |
-      # Replace with your resource group and web app name
-      RESOURCE_GROUP=$(resourceGroupName)
-      WEB_APP_NAME=$(appName)
-
       # Check the status of the web app
-      STATUS=$(az webapp show --resource-group $RESOURCE_GROUP --name $WEB_APP_NAME --query "state" -o tsv)
+      STATUS=$(az webapp show --resource-group $(resourceGroupName) --name $(appName) --query "state" -o tsv)
       if [ "$STATUS" != "Running" ]; then
         echo "Web app is malfunctioning. Deleting the web app..."
-        az webapp delete --resource-group $RESOURCE_GROUP --name $WEB_APP_NAME
+        az webapp delete --resource-group $(resourceGroupName) --name $(appName) 
         echo "##vso[task.setvariable variable=webAppDeleted]true"
       else
         echo "Web app is running. No need to delete."
@@ -42,17 +43,49 @@ steps:
 
 - task: AzureCLI@2
   condition: eq(variables['webAppDeleted'], 'true')
+  displayName: 'Ensure Resource Group Exists'
   inputs:
     azureSubscription: $(azureSubscription)
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
+    arguments: >
+      -resourceGroupName $(resourceGroupName)
+      -resourceGroupLocation $(resourceGroupLocation)
     inlineScript: |
       if ! az group exists --name $(resourceGroupName); then
         az group create --name $(resourceGroupName) --location $(resourceGroupLocation)
       fi
-  displayName: 'Ensure Resource Group Exists'
+  
+- task: AzureCLI@2
+  displayName:  'Create appservice plan if missing'
+  condition: eq(variables['webAppDeleted'], 'true')
+  inputs:
+    azureSubscription: $(azureSubscription)
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    arguments: >
+      -resourceGroupName $(resourceGroupName)
+      -appServicePlan $(appServicePlan)
+      -azureLocation $(azureLocation)
+      -appSku $(appSku)
+    inlineScript: |
+      # Check if the service plan exists
+      echo $(resourceGroupName)
+      echo $(appServicePlan)
+      echo $(azureLocation)
+      echo $(appSku)
+      
+      SERVICE_PLAN_EXISTS=$(az appservice plan show --name $(appServicePlan) --resource-group  $(resourceGroupName) --query "name" --output tsv)
+
+      if [ -z "$SERVICE_PLAN_EXISTS" ]; then
+        echo "Service plan does not exist. Creating service plan..."
+        az appservice plan create --name $(appServicePlan) --resource-group $(resourceGroupName) --location $(azureLocation) --sku $(appSku) --is-linux
+      else
+        echo "Service plan already exists."
+      fi
 
 - task: AzureResourceGroupDeployment@2
+  displayName:  'Create web app if missing'
   condition: eq(variables['webAppDeleted'], 'true')
   inputs:
     azureSubscription: $(azureSubscription)
@@ -60,10 +93,11 @@ steps:
     resourceGroupName: $(resourceGroupName)
     location: $(azureLocation)
     templateLocation: 'Linked artifact'
-    csmFile: '$(System.DefaultWorkingDirectory)/CommandLineWebApp/template.json'
+    csmFile: '$(System.DefaultWorkingDirectory)/CommandLineWebApp/Devops/template.json'
     csmParametersFile: '$(System.DefaultWorkingDirectory)/CommandLineWebApp/Devops/parameters.json'
 
 - task: UseDotNet@2
+  displayName: 'Installing .net 8.0'
   inputs:
     packageType: 'sdk'
     version: 8.x
@@ -87,6 +121,7 @@ steps:
     arguments: '--configuration $(buildConfiguration)'
 
 - task: DotNetCoreCLI@2
+  displayName: 'Publishing solution'
   inputs:
     command: 'publish'
     projects: '**/*.csproj'
@@ -107,6 +142,7 @@ steps:
   env:
     PATH: $(PATH):$(HOME)/.dotnet/tools
 - task: ArchiveFiles@2
+  displayName: 'Ziping Contents'
   inputs:
     rootFolderOrFile: 'CommandLineWebApp/_site'
     includeRootFolder: false
@@ -115,12 +151,14 @@ steps:
     replaceExistingArchive: true
 
 - task: PublishBuildArtifacts@1
+  displayName: 'Publising artifacts'
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)/publish/CommandLineWebApp.zip'
     ArtifactName: 'drop'
     publishLocation: 'Container'
 
 - task: AzureWebApp@1
+  displayName: 'Upoading app to Azure'
   inputs:
     azureSubscription: $(azureSubscription)
     appName: $(appName)
@@ -135,7 +173,7 @@ steps:
       echo "Website is down"
       exit 1
     fi
-  displayName: 'Ping Website'
+  displayName: 'Ping Azure Webapp'
 
 - script: |
     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
@@ -145,8 +183,26 @@ steps:
   displayName: 'Install GitHub CLI'
 
 - script: |
+    # Variables
+    GITHUB_OWNER=mlop3s
+    REPOSITORY_NAME=devopsbackup
+
+    # Check if the repository exists
+    REPO_EXISTS=$(gh repo view $GITHUB_OWNER/$REPOSITORY_NAME --json name --jq .name)
+
+    if [ -z "$REPO_EXISTS" ]; then
+      echo "Repository does not exist."
+      exit 1
+    else
+      echo "Repository exists: $REPO_EXISTS"
+    fi
+  displayName: 'Check if GitHub repository exists'
+  env:
+    GITHUB_TOKEN: $(GITHUB_PAT) 
+
+- script: |
     git clone https://mlop3s:$(GITHUB_PAT)@github.com/mlop3s/devopsbackup.git
-  displayName: 'Clone'
+  displayName: 'Clone git'
   env:
     GITHUB_PAT: $(GITHUB_PAT)
 
@@ -165,6 +221,6 @@ steps:
     git status
     git commit -m "Automated Commit"
     git push
-  displayName: 'Run script in src folder'
+  displayName: 'Commiting new zip file to github'
   workingDirectory: 'devopsbackup'
   
