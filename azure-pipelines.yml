@@ -185,7 +185,7 @@ steps:
   displayName: 'Install GitHub CLI'
 
 - script: |
-    gh auth login --with-token <<< "$GITHUB_PAT"
+    gh auth login --with-token <<< "$GH_TOKEN"
     if gh repo view $GITHUB_OWNER/$REPOSITORY_NAME > /dev/null 2>&1; then
       echo "Repository $REPO_NAME already exists."
     else
@@ -194,7 +194,7 @@ steps:
     fi
   displayName: 'Check if GitHub repository exists'
   env:
-    GITHUB_PAT: $(GITHUB_PAT) 
+    GH_TOKEN: $(GITHUB_PAT) 
     GITHUB_OWNER: $(githubOwner)
     REPOSITORY_NAME: $(repositoryName)
 
@@ -202,7 +202,7 @@ steps:
     git clone https://mlop3s:$(GITHUB_PAT)@github.com/$GITHUB_OWNER/$REPOSITORY_NAME.git
   displayName: 'Clone git'
   env:
-    GITHUB_PAT: $(GITHUB_PAT)
+    GH_TOKEN: $(GITHUB_PAT)
     GITHUB_OWNER: $(githubOwner)
     REPOSITORY_NAME: $(repositoryName)    
 
