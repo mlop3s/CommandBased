@@ -9,7 +9,7 @@ variables:
   buildConfiguration: 'Release'
   azureSubscription: 'OllisAzure'
   azureLocation: 'Germany West Central'
-  appServicePlan:'ASP-LomAzRG-bd9c (B1: 1)'
+  appServicePlan: 'ASP-LomAzRG-bd9c-B1'
   appSku: 'B1'
   appName: 'webapplom'
   resourceGroupName: 'lomazrg'
@@ -85,6 +85,7 @@ steps:
       fi
 
 - task: AzureResourceGroupDeployment@2
+  displayName:  'Create web app if missing'
   condition: eq(variables['webAppDeleted'], 'true')
   inputs:
     azureSubscription: $(azureSubscription)
