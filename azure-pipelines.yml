@@ -8,7 +8,7 @@ pool:
 variables:
   buildConfiguration: 'Release'
   azureSubscription: 'OllisAzure'
-  azureLocation: 'Germany West Central'
+  azureLocation: "'Germany West Central'"
   appServicePlan: 'ASP-LomAzRG-bd9c-B1'
   appSku: 'B1'
   appName: 'webapplom'
