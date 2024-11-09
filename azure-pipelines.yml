@@ -222,5 +222,5 @@ steps:
     git commit -m "Automated Commit"
     git push
   displayName: 'Commiting new zip file to github'
-  workingDirectory: 'devopsbackup'
+  workingDirectory: $(repositoryName)
   
