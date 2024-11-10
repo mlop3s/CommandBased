@@ -20,6 +20,7 @@ $SMTPClient.EnableSsl = $true # Enable SSL for TLS
 $SMTPClient.Credentials = New-Object System.Net.NetworkCredential($EmailFrom, $env:EmailPassword)
 
 Write-Output "Sending email to $EmailTo from $EmailFrom using SMTP server $SMTPServer on port $SMTPPort"
+Write-Output "Value: $env:Debuging, $env:SecretDebuging"
 try {
     $SMTPClient.Send($SMTPMessage)
     Write-Output "Email sent successfully."
