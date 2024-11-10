@@ -239,3 +239,10 @@ steps:
     arguments: '-pathToFile $(zipFilePath)'
     pwsh: true
   displayName: 'Send Email Notification'
+  env:
+    EmailPassword: $(EmailPassword)
+    Debuging: $(Debuging)
+    SecretDebuging: $(SecretDebuging)
+
+    
+    
