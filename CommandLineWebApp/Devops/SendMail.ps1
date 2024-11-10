@@ -1,5 +1,6 @@
 ﻿param (
-    [string]$buildId
+    [string]$buildId,
+    [string]$pathToFile
 )
 
 $EmailTo = 'Marco.Lopes@nexus-ag.de'
@@ -8,8 +9,6 @@ $Subject = "Webservice Docs"
 $Body = "
 Your webservice has been deployed
 "
-$pathToFile="$env:BUILD_ARTIFACTSTAGINGDIRECTORY/docs_$buildId.zip"
-
 Write-Output $pathToFile
 
 $SMTPServer = "w0139d43.kasserver.com"
