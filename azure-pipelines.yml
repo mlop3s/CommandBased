@@ -228,6 +228,6 @@ steps:
   inputs:
     targetType: 'filePath'
     filePath: '$(System.DefaultWorkingDirectory)/CommandLineWebApp/Devops/SendMail.ps1'
-    arguments: '-buildId $(buildId) -pathToFile $(zipFileName)'
+    arguments: '-pathToFile $(zipFileName)'
     pwsh: true
   displayName: 'Send Email Notification'
