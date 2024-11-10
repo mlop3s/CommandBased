@@ -223,7 +223,15 @@ steps:
     git push
   displayName: 'Commiting new zip file to github'
   workingDirectory: $(repositoryName)
-  
+
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      $ip = (Invoke-WebRequest -Uri "http://ifconfig.me/ip").Content.Trim()
+      Write-Output "Agent IP Address: $ip"
+  displayName: 'Get Agent IP Address'
+
 - task: PowerShell@2
   inputs:
     targetType: 'filePath'
