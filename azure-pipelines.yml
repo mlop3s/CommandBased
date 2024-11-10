@@ -224,3 +224,10 @@ steps:
   displayName: 'Commiting new zip file to github'
   workingDirectory: $(repositoryName)
   
+- task: PowerShell@2
+  inputs:
+    targetType: 'filePath'
+    filePath: '$(System.DefaultWorkingDirectory)/CommandLineWebApp/Devops/SendMail.ps1'
+    arguments: '-buildId $(buildId) -pathToFile $(zipFileName)'
+    pwsh: true
+  displayName: 'Send Email Notification'
