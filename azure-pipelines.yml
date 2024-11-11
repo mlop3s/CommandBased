@@ -16,7 +16,7 @@ variables:
   zipFileName: 'docs_$(Build.BuildId).zip'
   zipFilePath: '$(Build.ArtifactStagingDirectory)/$(zipFileName)'
   zipFilePathSafe: "$(zipFilePath).safe"
-  storageAccountName: 'azlomsa '
+  storageAccountName: 'azlomsa'
   containerName: 'documentation'
   blobName: '$(zipFileName)'
   websiteUrl: 'https://webapplom.azurewebsites.net'
@@ -238,7 +238,7 @@ steps:
     targetType: 'inline'
     script: |
       # Rename the file
-      Rename-Item -Path $(zipFilePath) -NewName $(zipFilePathSafe)'
+      Rename-Item -Path $(zipFilePath) -NewName $(zipFilePathSafe)
       Write-Host "File renamed from $(zipFilePath) to $(zipFilePathSafe)"
   displayName: "Rename file for e-mail attachment"
 
