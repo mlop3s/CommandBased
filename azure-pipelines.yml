@@ -15,6 +15,7 @@ variables:
   resourceGroupName: 'lomazrg'
   zipFileName: 'docs_$(Build.BuildId).zip'
   zipFilePath: '$(Build.ArtifactStagingDirectory)/$(zipFileName)'
+  zipFilePathSafe: '$(zipFilePath).safe'
   storageAccountName: 'azlomsa '
   containerName: 'documentation'
   blobName: '$(zipFileName)'
@@ -234,9 +235,23 @@ steps:
 
 - task: PowerShell@2
   inputs:
+    targetType: 'inline'
+    script: |
+      # Define the source and destination file paths
+      $sourceFilePath = "$(Build.SourcesDirectory)/path/to/oldfilename.txt"
+      $destinationFilePath = "$(Build.SourcesDirectory)/path/to/newfilename.txt"
+      
+      # Rename the file
+      Rename-Item -Path $(zipFilePath) -NewName $(zipFilePathSafe)'
+
+      Write-Host "File renamed from $(zipFilePath) to $(zipFilePathSafe)"
+  displayName: "Rename file for e-mail attachment"
+
+- task: PowerShell@2
+  inputs:
     targetType: 'filePath'
     filePath: '$(System.DefaultWorkingDirectory)/CommandLineWebApp/Devops/SendMail.ps1'
-    arguments: '-pathToFile $(zipFilePath)'
+    arguments: '-pathToFile $(zipFilePathSafe)'
     pwsh: false
   displayName: 'Send Email Notification'
   env:
