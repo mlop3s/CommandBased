@@ -237,7 +237,7 @@ steps:
     targetType: 'filePath'
     filePath: '$(System.DefaultWorkingDirectory)/CommandLineWebApp/Devops/SendMail.ps1'
     arguments: '-pathToFile $(zipFilePath)'
-    pwsh: true
+    pwsh: false
   displayName: 'Send Email Notification'
   env:
     EmailPassword: $(EmailPassword)
