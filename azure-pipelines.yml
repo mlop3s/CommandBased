@@ -170,6 +170,11 @@ steps:
     appType: 'webAppLinux'
 
 - script: |
+    echo "Waiting for 30 seconds before pinging the website..."
+    sleep 30
+  displayName: 'Wait for 30 seconds'
+
+- script: |
     if curl -s --head  --request GET $(websiteUrl) | grep "200 OK" > /dev/null; then 
       echo "Website is up"
     else
