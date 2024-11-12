@@ -25,4 +25,4 @@ jobs:
       run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
     - name: Run dotnet format
-      run: dotnet format --check
+      run: dotnet format
